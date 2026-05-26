@@ -1,56 +1,64 @@
 package teample;
 
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
+import javax.sound.sampled.FloatControl;
 import java.io.BufferedInputStream;
 import java.io.InputStream;
-import javax.sound.sampled.*;
 
 public class SoundManager {
     private Clip bgmClip;
+    // --- [추가] 기본 볼륨 설정 변수 (데시벨 단위) ---
+    //  0.0f = 원래 음량 (최대)
+    // -10.0f = 대략 반으로 줄어듦
+    // -20.0f = 잔잔하게 배경음으로 깔리는 크기
+    private float currentVolume = -15.0f; 
 
-    /**
-     * 배경음악(BGM)을 로드하고 무한 반복 재생하는 메서드
-     * @param fileName src/teample/ 폴더 내의 사운드 파일 이름 (확장자 .wav 필수)
-     */
+    // 배경음악 재생 메서드
     public void playBgm(String fileName) {
-        // 기존에 재생 중이던 BGM이 있다면 먼저 정지하고 메모리 해제
-        stopBgm();
-
         try {
-            // 리소스 폴더(src/teample)에서 안전하게 파일을 읽어오기 위한 스트림 세팅
-            InputStream is = getClass().getResourceAsStream(fileName);
+            InputStream is = getClass().getResourceAsStream("/teample/" + fileName);
             if (is == null) {
                 System.out.println("사운드 파일을 찾을 수 없습니다: " + fileName);
                 return;
             }
             
-            // Clip 버그 방지를 위해 Buffer 스트림으로 감싸기
             InputStream bufferedIn = new BufferedInputStream(is);
             AudioInputStream ais = AudioSystem.getAudioInputStream(bufferedIn);
             
-            // 오디오 클립 생성 및 오픈
             bgmClip = AudioSystem.getClip();
             bgmClip.open(ais);
             
-            // 호러 게임 필수 설정: 무한 반복 재생 구동
+            // --- [추가] 음악이 시작되기 전에 저장된 볼륨 값 적용 ---
+            setVolume(currentVolume);
+            
             bgmClip.loop(Clip.LOOP_CONTINUOUSLY);
             bgmClip.start();
             
         } catch (Exception e) {
-            System.out.println("BGM 재생 중 오류 발생: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
-    /**
-     * 재생 중인 배경음악을 멈추는 메서드 (방이 바뀌거나 배틀이 시작될 때 사용)
-     */
+    // --- [신규 추가] 실시간으로 음량을 조절하는 메서드 ---
+    public void setVolume(float volume) {
+        this.currentVolume = volume;
+        
+        // 데시벨 한계값 보정 (자바 Clip은 보통 -80dB 이하로 내려가면 무음 처리됨)
+        if (currentVolume < -80.0f) currentVolume = -80.0f;
+        if (currentVolume > 6.0f) currentVolume = 6.0f; // 최대치 제한
+        
+        if (bgmClip != null && bgmClip.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
+            FloatControl gainControl = (FloatControl) bgmClip.getControl(FloatControl.Type.MASTER_GAIN);
+            gainControl.setValue(currentVolume); // 실제 오디오 라인에 데시벨 값 주입
+        }
+    }
+
     public void stopBgm() {
-        if (bgmClip != null) {
-            if (bgmClip.isRunning()) {
-                bgmClip.stop();
-            }
-            bgmClip.close(); // 사용이 끝난 클립의 메모리 자원 반환
-            bgmClip = null;
+        if (bgmClip != null && bgmClip.isRunning()) {
+            bgmClip.stop();
+            bgmClip.close();
         }
     }
 }

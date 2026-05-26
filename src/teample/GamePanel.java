@@ -35,6 +35,9 @@ public class GamePanel extends JPanel implements Runnable {
     private final int TITLE_FADE_MS  = 4000;   // 4초에 걸쳐 페이드아웃
     private final int TITLE_TOTAL_MS = TITLE_HOLD_MS + TITLE_FADE_MS;  // 총 10초
     
+    // === 사운드 매니저 객체 생성 ===
+    public SoundManager soundM = new SoundManager();
+    
     // --- 게임 상태 상수 목록 ---
     public final int introState = 0;
     public final int playState = 1;
@@ -71,6 +74,9 @@ public class GamePanel extends JPanel implements Runnable {
         this.addKeyListener(keyH);
         this.setFocusable(true);
         mapM = new MapManager(maxScreenCol, maxScreenRow);
+        
+        // 배경음악 재생
+        soundM.playBgm("titlemusic.wav");
         
         // === 타이틀 시작 ===
         loadImages();
