@@ -7,8 +7,11 @@ public class StageData {
     public String roomName;
     public int[][] mapLayout;
     public Rectangle monsterPos;
+    public String requiredKey;
+    public String keyName;
     public Rectangle keyPos;
     public boolean hasMonster = false;
+    public boolean isMonsterDefeated = false;
     public boolean hasKey = false;
     public HashMap<Rectangle, String> doors = new HashMap<>();
 
@@ -17,11 +20,17 @@ public class StageData {
     public String interactText = "";
     public boolean hasInteractObject = false;
 
-    public StageData(String name, int[][] layout) {
-        this.roomName = name;
-        this.mapLayout = layout;
+    public StageData(String roomName, String requiredKey, int[][] mapLayout) {
+        this.roomName = roomName;
+        this.requiredKey = requiredKey;
+        this.mapLayout = mapLayout;
+        this.keyName = ""; // 기본값은 빈 문자열로 초기화
     }
-
+    public void removeTile(int col, int row) {
+        if (row >= 0 && row < mapLayout.length && col >= 0 && col < mapLayout[0].length) {
+            mapLayout[row][col] = 0; // 0은 보통 '빈 공간'을 의미합니다.
+        }
+    }
     // 특정 타일 좌표에 구조물 배치
     public void setStructure(int col, int row, int type) {
         if (row >= 0 && row < mapLayout.length && col >= 0 && col < mapLayout[0].length) {
